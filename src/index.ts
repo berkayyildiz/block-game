@@ -1,36 +1,40 @@
-import { Engine, Loader, DisplayMode } from 'excalibur';
-import { LevelOne } from './scenes/level-one/level-one';
-import { Player } from './actors/player/player';
-import { Resources } from './resources';
+import { Actor, CollisionType, Color, Engine, vec } from "excalibur";
 
-/**
- * Managed game class
- */
-class Game extends Engine {
-  private player: Player;
-  private levelOne: LevelOne;
+let draggingActor: Actor;
 
-  constructor() {
-    super({ displayMode: DisplayMode.FitScreen });
+const game = new Engine({
+  width: 800,
+  height: 600,
+});
+
+// Start the engine to begin the game.
+game.start();
+
+const paddle = new Actor({
+  x: 150,
+  y: game.drawHeight - 40,
+  width: 100,
+  height: 40,
+  color: Color.Gray,
+});
+
+paddle.body.collisionType = CollisionType.Fixed;
+
+game.add(paddle);
+
+paddle.enableCapturePointer = true;
+
+paddle.on("pointerdown", (event) => {
+  draggingActor = paddle;
+});
+
+paddle.on("pointerup", (event) => {
+  draggingActor = null;
+});
+
+game.input.pointers.primary.on("move", (event) => {
+  if (draggingActor) {
+    draggingActor.pos.x = event.pointer.lastWorldPos.x;
+    draggingActor.pos.y = event.pointer.lastWorldPos.y;
   }
-
-  public start() {
-
-    // Create new scene with a player
-    this.levelOne = new LevelOne();
-    this.player = new Player();
-    this.levelOne.add(this.player);
-
-    game.add('levelOne', this.levelOne);
-
-    // Automatically load all default resources
-    const loader = new Loader(Object.values(Resources));
-
-    return super.start(loader);
-  }
-}
-
-const game = new Game();
-game.start().then(() => {
-  game.goToScene('levelOne');
 });
