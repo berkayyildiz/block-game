@@ -6,7 +6,7 @@ module.exports = {
   entry: "./src/index.ts",
   target: "web",
   output: {
-    filename: '[name].js',
+    filename: "[name].js",
     sourceMapFilename: "[file].map",
     path: path.resolve(__dirname, "dist"),
   },
