@@ -1,4 +1,27 @@
 import { Actor, CollisionType, Color, Engine, Input, Physics, Vector } from "excalibur"
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app"
+import { getDatabase, ref, set } from "firebase/database"
+import { Player } from "./actors/player"
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBURJTpthV-bxkyYuMDBpTYuZ2z2dy3XV0",
+  authDomain: "game-of-blocks.firebaseapp.com",
+  databaseURL: "https://game-of-blocks-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "game-of-blocks",
+  storageBucket: "game-of-blocks.appspot.com",
+  messagingSenderId: "529244131206",
+  appId: "1:529244131206:web:f9167a6b558ddd0e72e607",
+  measurementId: "G-Q92ZFW5PDN",
+}
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig)
+const database = getDatabase(app)
 
 let draggingActor: Actor | null
 
@@ -16,9 +39,9 @@ const boxes: Actor[] = []
 
 function addBox() {
   const box = new Actor({
-    x: game.drawWidth / 2 - 50,
+    x: game.drawWidth / 2 - 20,
     y: game.drawHeight / 2 - 20,
-    width: 100,
+    width: 40,
     height: 40,
     color: Color.Gray,
   })
@@ -41,15 +64,7 @@ let actor: Actor
 const actorCenter = new Vector(game.drawWidth / 2 - 20, game.drawHeight / 2 - 20)
 
 function addActor() {
-  actor = new Actor({
-    x: actorCenter.x,
-    y: actorCenter.y,
-    width: 40,
-    height: 40,
-    color: Color.Yellow,
-  })
-  actor.body.collisionType = CollisionType.Active
-  actor.enableCapturePointer = true
+  actor = new Player(actorCenter.x, actorCenter.y)
 
   actor.on("pointerdown", () => {
     draggingActor = actor
@@ -58,20 +73,17 @@ function addActor() {
   actor.on("pointerup", () => {
     draggingActor = null
   })
-
   game.add(actor)
 }
 
 addActor()
 
 function startPlay() {
-  Physics.acc.setTo(0, 1000)
   isPlaying = true
+  game.currentScene.camera.strategy.lockToActor(actor)
 }
 
 function stopPlay() {
-  Physics.acc.setTo(0, 0)
-  actor.vel.setTo(0, 0)
   isPlaying = false
 }
 
@@ -99,8 +111,6 @@ game.input.pointers.primary.on("move", event => {
   }
 })
 
-let isActorJumping = false
-
 game.input.pointers.primary.on("wheel", event => {
   const factor = 0.001
   game.currentScene.camera.zoom -= event.deltaY * factor
@@ -117,29 +127,5 @@ game.input.keyboard.on("press", event => {
     }
   } else if (event.key == Input.Keys.R) {
     actor.pos.setTo(actorCenter.x, actorCenter.y)
-  } else if (event.key == Input.Keys.W && !isActorJumping && isPlaying) {
-    isActorJumping = true
-    actor.vel.setTo(0, -400)
-  }
-})
-
-actor.on("collisionend", event => {
-  console.log(event)
-  isActorJumping = false
-})
-
-actor.on("collisionstart", event => {
-  console.log(event)
-  isActorJumping = false
-})
-
-game.input.keyboard.on("hold", event => {
-  const velX = 2.5
-  if (isPlaying) {
-    if (event.key == Input.Keys.D) {
-      actor.pos.x += velX
-    } else if (event.key == Input.Keys.A) {
-      actor.pos.x -= velX
-    }
   }
 })
