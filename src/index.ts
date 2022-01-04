@@ -1,8 +1,9 @@
-import { Actor, CollisionType, Color, Engine, Input, Physics, Vector } from "excalibur"
+import { Actor, CollisionType, Color, Engine, Input, Vector } from "excalibur"
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app"
-import { getDatabase, ref, set } from "firebase/database"
+import { getDatabase } from "firebase/database"
 import { Player } from "./actors/player"
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -22,12 +23,46 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 const database = getDatabase(app)
+import { getAuth, signInWithEmailAndPassword, signOut, User } from "firebase/auth"
+let user: User
+const auth = getAuth()
+function login() {
+  console.log("hey")
 
+  signInWithEmailAndPassword(auth, "test@mail.com", "123456789")
+    .then(userCredential => {
+      // Signed in
+      user = userCredential.user
+      console.log(user)
+      addActor()
+
+      // ...
+    })
+    .catch(error => {
+      const errorCode = error.code
+      const errorMessage = error.message
+      console.log(errorMessage, errorCode)
+    })
+}
+
+function logout() {
+  signOut(auth)
+    .then(() => {
+      // Sign-out successful.
+      console.log("sign out succesfull")
+      actor.kill()
+      user = null
+    })
+    .catch(error => {
+      // An error happened.
+      console.log("sign out error")
+    })
+}
 let draggingActor: Actor | null
 
 const game = new Engine({
-  width: window.innerWidth,
-  height: window.innerHeight,
+  width: window.innerWidth * 0.9,
+  height: window.innerHeight * 0.9,
 })
 
 // Start the engine to begin the game.
@@ -64,7 +99,7 @@ let actor: Actor
 const actorCenter = new Vector(game.drawWidth / 2 - 20, game.drawHeight / 2 - 20)
 
 function addActor() {
-  actor = new Player(actorCenter.x, actorCenter.y)
+  actor = new Player(user, database)
 
   actor.on("pointerdown", () => {
     draggingActor = actor
@@ -75,8 +110,6 @@ function addActor() {
   })
   game.add(actor)
 }
-
-addActor()
 
 function startPlay() {
   isPlaying = true
@@ -127,5 +160,9 @@ game.input.keyboard.on("press", event => {
     }
   } else if (event.key == Input.Keys.R) {
     actor.pos.setTo(actorCenter.x, actorCenter.y)
+  } else if (event.key == Input.Keys.L) {
+    login()
+  } else if (event.key == Input.Keys.O) {
+    logout()
   }
 })
